@@ -155,6 +155,42 @@ export const api = {
 - All HTTP calls must go through `lib/api/client.ts`.
 - If using React Query, hooks live in `lib/query`. Never fetch directly in components.
 
+## Tailwind CSS Setup (Important)
+
+Tailwind CSS v4 has a different setup than v3. Follow these exact steps:
+
+**Installation:**
+```bash
+pnpm add tailwindcss@next @tailwindcss/postcss
+```
+
+**PostCSS Configuration (postcss.config.mjs):**
+```js
+/** @type {import('postcss-load-config').Config} */
+const config = {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+}
+
+export default config
+```
+
+**CSS File (app/globals.css):**
+```css
+@import "tailwindcss";
+```
+
+**Important Notes:**
+- DO NOT create a `tailwind.config.ts` file (not needed in v4)
+- DO NOT use the old `@tailwind base/components/utilities` directives
+- DO NOT install `postcss` or `autoprefixer` separately (handled by @tailwindcss/postcss)
+- You MUST install both `tailwindcss` AND `@tailwindcss/postcss` packages
+- The `@import "tailwindcss"` syntax requires the `tailwindcss` package to be installed
+
+**Why this matters:**
+Tailwind v4 uses a unified PostCSS plugin (`@tailwindcss/postcss`) instead of separate plugins. The old v3 setup will cause errors like "Can't resolve 'tailwindcss'" if you only install the PostCSS plugin without the main package, or "tailwindcss directly as a PostCSS plugin" if you try to use v3 syntax.
+
 ## Linting and Formatting (Frontend)
 
 - Use ESLint with Next.js default config.

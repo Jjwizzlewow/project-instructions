@@ -56,8 +56,8 @@ backend/
 - Define a settings class in `app/config/settings.py` using `pydantic.BaseSettings`.
 - Configuration values should be read from environment variables.
 - Example values: API prefix, data directory, database URL, API tokens.
-- All local data file paths must resolve from `settings.DATA_DIR`.
-- `settings.DATA_DIR` should be an absolute path, defaulting to `backend/data`.
+- `settings.DATA_DIR` (only if using file-based storage)
+- Always load .env via with load_dotenv().
 
 ## Data Access
 
@@ -89,6 +89,5 @@ backend/
 - Place all logic in service modules.
 - Use pydantic models for request and response validation.
 - Use a database only if required by this project.
-- Use `settings.DATA_DIR` for all local file storage.
 - Place all configuration in `settings.py`.
 

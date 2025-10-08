@@ -2,8 +2,7 @@
 
 - **Scope**: These are baseline, reusable conventions. Your project-specific instructions override any defaults here.
 - **Keep it simple**: Prefer the minimal structure and conventions shown below unless the project doc asks for more.
-- **One source of truth**: For backend paths, use `settings.DATA_DIR`. For frontend HTTP calls, use a central `lib/api/client.ts`.
-- **Local data**: Only local data file paths should resolve from `settings.DATA_DIR`, which should be absolute and default to `backend/data`.
+
 
 ### Monorepo Layout (Top-Level)
 
@@ -11,7 +10,6 @@
 / (repo root)
   backend/              # FastAPI app (see BACKEND_INSTRUCTIONS.md)
   frontend/             # Next.js (App Router) app (see FRONTEND_INSTRUCTIONS.md)
-  data/                 # Optional local data dir (if file storage is chosen)
   .env                  # Environment variables (present from start; never commit)
   CLAUDE.md             # Claude-specific workflow guidance
   PROJECT_TEMPLATE.md   # This file
@@ -49,7 +47,7 @@
 
 ### Minimal Conventions (Carry Across Projects)
 
-- Backend: thin route handlers in `app/routes/`, business logic in `app/services/`, schemas in `app/schemas/`. Resolve file paths from `settings.DATA_DIR`.
+- Backend: thin route handlers in `app/routes/`, business logic in `app/services/`, schemas in `app/schemas/`.
 - Frontend: Next.js App Router, Tailwind, shadcn/ui components in `components/ui/`, all HTTP via `lib/api/client.ts`, query hooks in `lib/query/` using React Query.
 - Windows: keep console output ASCII-only; avoid background server processes in tests; prefer absolute paths.
 

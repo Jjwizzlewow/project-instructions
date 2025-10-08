@@ -82,12 +82,36 @@ file_path = os.path.join("..", "data", "myfile.json")
 
 ---
 
+## Creating Directories
+
+### mkdir Command Syntax
+
+**Problem**: Using `mkdir` with backslash-separated paths in a single command creates incorrectly named folders.
+
+```bash
+# INCORRECT - creates folders named "backendappconfig", "backendappdb", etc.
+mkdir backend\app\config backend\app\db backend\app\routes
+
+# CORRECT - chain separate mkdir commands with &&
+mkdir backend\app && mkdir backend\app\config && mkdir backend\app\db && mkdir backend\app\routes
+
+# ALTERNATIVE - use PowerShell
+powershell -Command "New-Item -ItemType Directory -Path 'backend\app\config', 'backend\app\db', 'backend\app\routes' -Force"
+```
+
+**Root cause**: When multiple paths with backslashes are passed to mkdir in Git Bash or similar shells, the backslashes are not interpreted as path separators.
+
+**Rule**: Always chain mkdir commands with `&&` on Windows, or use PowerShell's `New-Item` command for creating multiple nested directories.
+
+---
+
 ## Assistant Instructions
 
 - Do not use emojis or special characters in console output.
 - Do not assume `pip` uses the correct Python environment — always use `.venv` explicitly.
 - Do not start or leave background server processes running during development or testing.
 - Always resolve file paths using `settings.DATA_DIR`.
+- Always chain mkdir commands with `&&` when creating nested directories on Windows.
 
 ---
 
