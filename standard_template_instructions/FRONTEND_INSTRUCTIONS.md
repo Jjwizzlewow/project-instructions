@@ -36,10 +36,12 @@ All code is written in TypeScript. No CSS-in-JS, no external component libraries
     /api
       client.ts             # Centralized fetch wrapper
     /query
-      hooks.ts              # React Query hooks
+      domainA.ts            # Domain-specific hooks + types
+      domainB.ts            # Domain-specific hooks + types
+      hooks.ts              # (optional) thin re-exports (no new definitions)
       keys.ts               # Query keys
     /types                  # Shared TypeScript types (optional)
-    /utils                  # Utility functions (e.g. cn, formatDate)
+    /utils                  # Utility functions (e.g. cn, formatDate, adapters)
 ```
 
 ## Data Fetching
@@ -52,18 +54,18 @@ React Query is used for:
 - Retry logic
 - Built-in loading and error states
 
-Query hooks are defined in `lib/query/hooks.ts`.
+Query hooks are defined per domain in separate files under `lib/query/` (one file per bounded context). Keep files small and focused. A thin `lib/query/hooks.ts` may re-export from these files for convenience, but definitions belong in the domain files.
 
-Example:
+Example domain hooks:
 
 ```ts
-// lib/query/hooks.ts
-export function useEpisodes() {
-  return useQuery({
-    queryKey: ['episodes'],
-    queryFn: () => api.getEpisodes(),
-  });
-}
+// lib/query/domainA.ts
+export interface DomainAResponse { /* … */ }
+export function useDomainA(id: string) { /* … */ }
+
+// lib/query/domainB.ts
+export interface DomainBResponse { /* … */ }
+export function useDomainB(id: string) { /* … */ }
 ```
 
 To refresh data manually:
@@ -98,7 +100,7 @@ All component styling should be done with Tailwind utility classes, and optional
 ## Conventions and Rules
 
 - All API calls go through `lib/api/client.ts`.
-- All React Query hooks live in `lib/query/hooks.ts`.
+- React Query hooks live in `lib/query/` split by domain. `hooks.ts` may re-export only.
 - All fetches use typed return values.
 - All UI elements are composed using Tailwind + shadcn/ui.
 - No external component libraries (e.g., MUI, Chakra, Ant).
@@ -106,7 +108,25 @@ All component styling should be done with Tailwind utility classes, and optional
 - No Server Actions. All business logic lives in the backend (FastAPI).
 - Use `pnpm` for package management across all projects.
 
+## Integration Rules (must follow)
+- Use existing TypeScript types for API data (e.g., from `lib/query/`); do not redefine shapes.
+- Match import style to file exports: use named imports unless a file exports a default.
+- If a component needs different props than API data, create a small adapter or wrapper; avoid duplicating components.
+- Cache keys should include only data-affecting params (e.g., identifiers, filters that affect fetch), not UI-only toggles.
+- Hooks fetch from a single endpoint and stay domain-scoped. Compose multiple hooks at page/container level when needed.
+- Treat the URL (or designated source) as the single source of truth for view state; avoid duplicated internal state that can drift.
+- For auto-populated defaults, update the URL/history in a way that doesn’t spam history (e.g., replace for auto-defaults, push for user actions).
+- Add aria-labels to icon-only buttons and use `aria-current="page"` on the active nav item.
+- Run typecheck/build before manual browser tests.
+
 ## Notes
+
+## Types and adapters
+
+- Define API response types alongside their fetching hooks in the same domain file.
+- Do not redefine API shapes inside components. If a component needs a different shape, create a small adapter/transformer (in `lib/utils` or next to the component).
+- Prefer passing narrow “view model” props created by adapters rather than raw API shapes.
+- If a type is truly shared across multiple domains, move it to `lib/types/` (keep minimal).
 
 - Only install shadcn/ui components that are needed per project.
 - If a charting library is used, wrap it in a chart adapter layer (`components/charts/`) to isolate dependencies.

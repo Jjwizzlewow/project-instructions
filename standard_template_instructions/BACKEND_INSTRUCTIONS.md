@@ -45,11 +45,55 @@ backend/
 - Service modules go in `app/services/`.
 - Each service file handles logic for a specific feature or domain.
 - Services may read from/write to local files or a database, depending on the project.
+- **CRITICAL**: Services should have clear, single responsibilities
+- **CRITICAL**: Avoid services that just pass data through without adding value
+- **CRITICAL**: Keep UI/display concerns separate from business logic
 
-## Schemas
+## Service Design Principles
 
-- All request and response models go in `app/schemas/`.
-- Use pydantic models to define the structure of API payloads.
+### Single Responsibility Principle
+- Each service should have ONE clear purpose
+- Services should not mix unrelated concerns
+- Example: `options_service` handles option calculations, NOT price display data
+
+### Service Boundaries
+- Services should be loosely coupled and highly cohesive
+- Avoid services that are just "pass-through" layers
+- Each service should own its domain logic completely
+
+### Data Flow Patterns
+- **Good**: Direct service-to-frontend communication for display data
+- **Bad**: Unnecessary data passing through multiple service layers
+- **Rule**: If a service doesn't USE the data, it shouldn't PASS the data
+
+### API Design
+- Keep API responses focused on their primary purpose
+- Avoid mixing unrelated data in single endpoints
+- Consider separate endpoints for different concerns
+- Example: `/api/resourceA/{id}` vs `/api/resourceB/{id}`
+- Mirror routes → services → schemas by domain. When you add a route file for a domain, ensure corresponding service(s) and schema file exist for that domain.
+- Avoid placing models for one domain in another domain’s schema file.
+
+### When to Create New Services
+- When adding functionality that doesn't fit existing service boundaries
+- When a service becomes too large or handles multiple domains
+- When you need to avoid circular dependencies
+
+### Anti-Patterns to Avoid
+- Services that are just data pass-through layers
+- Mixing UI concerns with business logic
+- Services that handle multiple unrelated domains
+- Tight coupling between services for unrelated functionality
+
+## Schemas (Pydantic)
+
+- Place models in `app/schemas/` and split by bounded context (mirror your routes/services).
+  - Example: `schemas/users.py`, `schemas/billing.py`, `schemas/metrics.py`
+- Keep each schema file small and focused (<200 lines). Avoid “everything” files.
+- Response models should represent one primary concern. If you add a new concern, create a new model/file in its domain.
+- Do not return cross-domain data from a single service by default. Compose at the orchestration layer if multiple domains are truly required.
+- Optional shared shapes go in `schemas/common.py` (keep minimal).
+- If breaking changes are needed, version models explicitly (e.g., `ResponseV2`).
 
 ## Configuration
 
@@ -83,6 +127,26 @@ backend/
 - If using Black for formatting, configure Ruff for lint-only and let Black handle formatting.
 - Example commands: `ruff check .` and either `ruff format .` or `black .` (pick one formatter).
 
+## Architecture Decision Guidelines
+
+### Before Adding Data to a Service Response, Ask:
+1. Does this service actually USE this data for its core functionality?
+2. Is this data related to the service's primary responsibility?
+3. Would this data be better served by a separate endpoint?
+4. Am I creating unnecessary coupling between services?
+
+### When Refactoring Services:
+1. Identify the core responsibility of each service
+2. Move unrelated functionality to appropriate services
+3. Create new services if needed rather than bloating existing ones
+4. Ensure each service has a clear, single purpose
+
+### API Endpoint Design:
+- One endpoint = One primary concern
+- Avoid mixing option data with price display data
+- Consider frontend needs but don't let them drive service architecture
+- Prefer multiple focused endpoints over one bloated endpoint
+
 ## Rules
 
 - Keep route handlers thin.
@@ -90,4 +154,8 @@ backend/
 - Use pydantic models for request and response validation.
 - Use a database only if required by this project.
 - Place all configuration in `settings.py`.
+- **NEW**: Each service must have a single, clear responsibility.
+- **NEW**: Avoid services that are just data pass-through layers.
+- **NEW**: Keep UI/display concerns separate from business logic.
+- **NEW**: Consider separate API endpoints for different concerns.
 

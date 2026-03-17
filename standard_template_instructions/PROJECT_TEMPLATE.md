@@ -48,7 +48,9 @@
 ### Minimal Conventions (Carry Across Projects)
 
 - Backend: thin route handlers in `app/routes/`, business logic in `app/services/`, schemas in `app/schemas/`.
+- Backend schemas are split by domain; `app/schemas/` mirrors `app/routes/` and `app/services/`.
 - Frontend: Next.js App Router, Tailwind, shadcn/ui components in `components/ui/`, all HTTP via `lib/api/client.ts`, query hooks in `lib/query/` using React Query.
+- Frontend React Query hooks and their API types are split by domain in `lib/query/`. A `lib/query/hooks.ts` file may re-export for convenience, but define hooks/types in their domain files.
 - Windows: keep console output ASCII-only; avoid background server processes in tests; prefer absolute paths.
 
 ### Precedence

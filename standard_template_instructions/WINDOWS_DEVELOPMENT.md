@@ -50,14 +50,66 @@ pip install package_name
 
 **Problem**: Development or test scripts leave background servers running, blocking ports or causing stale behavior.
 
-**Solution**: After aborting a run or test, ensure all background processes are stopped:
+**Solution**: Always check for and kill processes occupying specific ports before starting servers.
+
+#### Step 1: Check if a port is in use
 
 ```bash
-# Kill stuck processes manually if needed
-# Use Task Manager or taskkill
+# Check what process is using port 8010
+netstat -ano | findstr :8010
+
+# Output example:
+# TCP    127.0.0.1:8010    0.0.0.0:0    LISTENING    13000
+#                                                     ^^^^^ This is the PID
 ```
 
-**Rule**: Tests must not spawn uvicorn or any background servers. The assistant must never generate code that leaves persistent processes running in the background.
+#### Step 2: Kill the specific process
+
+```bash
+# INCORRECT - kills ALL python processes (dangerous)
+taskkill /F /IM python.exe
+
+# INCORRECT - bash interprets /F as path F:/
+taskkill /F /PID 13000
+
+# CORRECT - use double slashes in Git Bash
+taskkill //F //PID 13000
+
+# ALTERNATIVE - use cmd /c wrapper
+cmd /c "taskkill /F /PID 13000"
+```
+
+**Root cause**: Git Bash interprets single forward slashes as paths. Use double slashes (`//`) for Windows command flags in Git Bash, or wrap the command with `cmd /c`.
+
+#### Step 3: Verify port is free
+
+```bash
+# Check again - should return nothing or "Error" if port is free
+netstat -ano | findstr :8010
+```
+
+#### Complete workflow for restarting backend server
+
+```bash
+# 1. Find process on port 8010
+netstat -ano | findstr :8010
+
+# 2. If output shows a PID, kill that specific process
+taskkill //F //PID <PID_NUMBER>
+
+# 3. Verify port is free
+netstat -ano | findstr :8010
+
+# 4. Only then start the server
+cd backend && "../.venv/Scripts/python.exe" run.py
+```
+
+**Rule**:
+- Tests must not spawn uvicorn or any background servers
+- Never kill processes by image name (e.g., `python.exe`) - always target specific PIDs
+- Always check if a port is occupied before attempting to start a server on that port
+- When starting a background process for testing, always kill it when done
+- Use double slashes (`//`) for Windows command flags in Git Bash or wrap with `cmd /c`
 
 ---
 
@@ -105,13 +157,80 @@ powershell -Command "New-Item -ItemType Directory -Path 'backend\app\config', 'b
 
 ---
 
+## Searching and Listing Files
+
+### Directory Listing Commands
+
+**Problem**: Mixing bash-style commands (`ls`, `dir`) with Windows-style paths causes errors.
+
+```bash
+# INCORRECT - mixing bash command with Windows path separator
+ls components\ui
+dir components\ui
+
+# CORRECT - use cmd /c for Windows commands
+cmd /c dir components\ui
+
+# CORRECT - convert to forward slashes for bash commands
+ls components/ui
+
+# BEST - use Glob tool instead of bash commands
+# Use Glob tool with pattern: "components/ui/*"
+```
+
+**Root cause**: Git Bash interprets backslashes differently than Windows CMD. When you write `dir components\ui`, bash treats `\u` as an escape sequence, resulting in paths like `componentsui`.
+
+**Rule**:
+- For Windows `dir` command: Always use `cmd /c dir path\to\directory`
+- For bash `ls` command: Always use forward slashes `ls path/to/directory`
+- **PREFERRED**: Use the Glob tool instead of bash commands for file searching
+
+### Searching for Files
+
+```bash
+# INCORRECT - using bash find/grep with Windows paths
+find backend\app -name "*.py"
+
+# CORRECT - use Glob tool
+# Glob with pattern: "backend/app/**/*.py"
+
+# ALTERNATIVE - use PowerShell
+powershell -Command "Get-ChildItem -Path backend\app -Filter *.py -Recurse"
+```
+
+**Rule**: Always prefer using the Glob tool for file pattern matching. If you must use bash commands, convert all backslashes to forward slashes.
+
+### Checking if Files/Directories Exist
+
+```bash
+# INCORRECT - using bash test with Windows paths
+test -d backend\app
+
+# CORRECT - use cmd /c to check directories
+cmd /c "if exist backend\app echo exists"
+
+# BEST - use Glob or Read tools
+# Glob will return "No files found" if path doesn't exist
+# Read will return error if file doesn't exist
+```
+
+**Rule**: Use Glob or Read tools to verify paths. If using bash commands, always convert backslashes to forward slashes or wrap with `cmd /c`.
+
+---
+
 ## Assistant Instructions
 
 - Do not use emojis or special characters in console output.
 - Do not assume `pip` uses the correct Python environment — always use `.venv` explicitly.
-- Do not start or leave background server processes running during development or testing.
+- **Before starting a server, always check if the port is occupied using `netstat -ano | findstr :PORT`**
+- **Never kill processes by image name (`taskkill /IM`) - always target specific PIDs**
+- **Use double slashes (`//`) for Windows command flags in Git Bash (e.g., `taskkill //F //PID 123`)**
+- When starting a background process for testing, always kill it when done
 - Always resolve file paths using `settings.DATA_DIR`.
 - Always chain mkdir commands with `&&` when creating nested directories on Windows.
+- **Never mix bash commands (ls, dir, find) with Windows-style paths (backslashes).**
+- **Always use `cmd /c` when running Windows commands, or convert paths to forward slashes for bash.**
+- **Prefer Glob and Read tools over bash file search commands.**
 
 ---
 

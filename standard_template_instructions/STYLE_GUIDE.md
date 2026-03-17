@@ -15,11 +15,35 @@ The generated UI should be:
 - Do not use third-party component libraries (e.g., MUI, Ant, Chakra)
 - Use `lucide-react` for all icons
 
+### Button Hover Effects
+
+Ghost variant buttons (commonly used for icon-only action buttons) should have a prominent hover background:
+- Light mode: `hover:bg-gray-200`
+- Dark mode: `dark:hover:bg-gray-600`
+
+This provides clear visual feedback when users hover over action buttons like edit, delete, or view icons.
+
 ## Styling System
 
 - Use [Tailwind CSS] utility classes for all layout, color, and spacing
 - Do not use raw CSS, CSS-in-JS, or inline styles
 - All styling should be editable via Tailwind class names
+
+### Global Button Cursor
+
+All buttons should have pointer cursor on hover by default. Add the following to your global CSS file:
+
+```css
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+```
+
+This ensures consistent cursor behavior across all button elements without needing to add `cursor-pointer` to individual buttons.
 
 ## Layout
 
